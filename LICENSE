@@ -1,0 +1,54 @@
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+
+Copyright (c) 2026 Abderemane Attoumani
+Project : EpiSight — Dashboard Épidémiologique Interactif
+GitHub  : https://github.com/abderemaneattoumani/EpiSight
+
+═══════════════════════════════════════════════════════════════
+
+You are free to:
+  Share  — copy and redistribute this project in any medium or format
+  Adapt  — remix, transform, and build upon this project
+
+═══════════════════════════════════════════════════════════════
+
+Under the following terms:
+  Attribution — You must give appropriate credit to the original author
+                (Abderemane Attoumani), provide a link to this repository
+                (https://github.com/abderemaneattoumani/EpiSight),
+                and indicate if any changes were made.
+                You may do so in any reasonable manner, but not in any
+                way that suggests the author endorses you or your use.
+
+  NonCommercial — You may not use this project or any derivative work
+                  for commercial purposes. This includes selling, licensing,
+                  or incorporating this work into a paid product or service
+                  without explicit written permission from the author.
+
+═══════════════════════════════════════════════════════════════
+
+No additional restrictions — You may not apply legal terms or technological
+measures that legally restrict others from doing anything the license permits.
+
+═══════════════════════════════════════════════════════════════
+
+Notices:
+  This project was developed as part of my personal portfolio.
+  It demonstrates a complete Data Science pipeline applied to
+  public epidemiological data — from automated ETL (Santé Publique
+  France / data.gouv.fr) to an interactive Streamlit dashboard,
+  featuring official SPF indicators (incidence rate, positivity rate,
+  7-day rolling averages), automatic epidemic wave detection via
+  SciPy find_peaks, and a 7-day predictive model using Facebook
+  Prophet trained on 1,141 days of real COVID-19 data.
+
+  Data source : Santé Publique France — data.gouv.fr (open data)
+  Data is not owned by the author and remains under its original
+  open license (Licence Ouverte / Open Licence v2.0).
+
+  For any commercial use, collaboration, or permission request,
+  please contact the author via GitHub.
+
+Full license text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+═══════════════════════════════════════════════════════════════
