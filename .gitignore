@@ -1,0 +1,20 @@
+# Environnement Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Données brutes (trop lourdes pour GitHub)
+data/raw/
+data/processed/
+
+# Modèles entraînés
+models/*.pkl
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+*.log
+
+# VS Code
+.vscode/
