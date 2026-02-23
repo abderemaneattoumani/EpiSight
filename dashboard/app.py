@@ -157,11 +157,12 @@ with col5:
 st.markdown("---")
 
 # Onglets Principaux
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Évolution temporelle",
     "Hospitalisations",
     "Vaccination",
-    "Analyse départementale"
+    "Analyse départementale",
+    "Prédiction IA"
 ])
 
 
@@ -208,7 +209,7 @@ with tab1:
         template='plotly_white',
         legend=dict(orientation="h", yanchor="bottom", y=1.02)
     )
-    st.plotly_chart(fig_cas, use_container_width=True)
+    st.plotly_chart(fig_cas, width='stretch')
     
     # Graphique taux de positivité
     fig_tp = go.Figure()
@@ -233,7 +234,7 @@ with tab1:
         height=350, template='plotly_white',
         hovermode='x unified'
     )
-    st.plotly_chart(fig_tp, use_container_width=True)
+    st.plotly_chart(fig_tp, width='stretch')
 
 
 # ONGLET 2 — Hospitalisations
@@ -257,7 +258,7 @@ with tab2:
             height=350, template='plotly_white',
             hovermode='x unified'
         )
-        st.plotly_chart(fig_hosp, use_container_width=True)
+        st.plotly_chart(fig_hosp, width='stretch')
     
     with col_h2:
         fig_rea = go.Figure()
@@ -276,7 +277,7 @@ with tab2:
             height=350, template='plotly_white',
             hovermode='x unified'
         )
-        st.plotly_chart(fig_rea, use_container_width=True)
+        st.plotly_chart(fig_rea, width='stretch')
     
     # Décès
     if 'deces_mm7' in h.columns:
@@ -295,7 +296,7 @@ with tab2:
             height=320, template='plotly_white',
             hovermode='x unified'
         )
-        st.plotly_chart(fig_dc, use_container_width=True)
+        st.plotly_chart(fig_dc, width='stretch')
 
 # ONGLET 3 — Vaccination
 with tab3:
@@ -329,7 +330,7 @@ with tab3:
         hovermode='x unified',
         legend=dict(orientation="h", yanchor="bottom", y=1.02)
     )
-    st.plotly_chart(fig_vacc, use_container_width=True)
+    st.plotly_chart(fig_vacc, width='stretch')
     
     # Doses journalières
     if 'doses_jour' in v.columns:
@@ -345,7 +346,7 @@ with tab3:
             xaxis_title="Date", yaxis_title="Doses",
             height=320, template='plotly_white'
         )
-        st.plotly_chart(fig_doses, use_container_width=True)
+        st.plotly_chart(fig_doses, width='stretch')
 
 # ONGLET 4 — Analyse départementale
 with tab4:
@@ -416,10 +417,104 @@ with tab4:
             hovermode='x unified',
             showlegend=False
         )
-        st.plotly_chart(fig_dep, use_container_width=True)
+        st.plotly_chart(fig_dep, width='stretch')
         
     else:
         st.warning(f"Aucune donnée pour le département {dep_selectionne} sur cette période.")
+
+# ONGLET 5 — Prédiction IA
+with tab5:
+    st.subheader("Prédiction IA — 7 prochains jours")
+    
+    st.info("""
+    **Modèle utilisé : Prophet (Meta/Facebook)**  
+    Algorithme de prévision de séries temporelles, entraîné sur 3 ans de données Covid.  
+    Il détecte automatiquement les tendances, saisonnalités hebdomadaires et annuelles.
+    """)
+    
+    predictions_path = Path(__file__).parent.parent / "data" / "processed" / "predictions_7j.csv"
+    
+    if predictions_path.exists():
+        pred = pd.read_csv(predictions_path, parse_dates=['date'])
+        
+        # Affichage tableau
+        st.markdown("#### Prévisions quotidiennes")
+        pred_affich = pred.copy()
+        pred_affich.columns = ['Date', 'Prédiction (cas/j)', 
+                                'Borne basse (95%)', 'Borne haute (95%)']
+        pred_affich['Date'] = pred_affich['Date'].dt.strftime('%A %d %b %Y')
+        for col in ['Prédiction (cas/j)', 'Borne basse (95%)', 'Borne haute (95%)']:
+            pred_affich[col] = pred_affich[col].apply(lambda x: f"{int(x):,}".replace(",", " "))
+        st.dataframe(pred_affich, width='stretch', hide_index=True)
+        
+        # Graphique prédiction
+        derniers_30j = tests_nat.tail(30)
+        
+        fig_pred = go.Figure()
+        
+        # Historique récent
+        fig_pred.add_trace(go.Scatter(
+            x=derniers_30j['jour'], y=derniers_30j['cas_mm7'],
+            mode='lines',
+            line=dict(color='#e74c3c', width=2),
+            name='Historique (MM7)',
+            hovertemplate='%{x|%d/%m/%Y}<br>Réel: %{y:,.0f}<extra></extra>'
+        ))
+        
+        # Intervalle de confiance
+        fig_pred.add_trace(go.Scatter(
+            x=pd.concat([pred['date'], pred['date'].iloc[::-1]]),
+            y=pd.concat([pred['borne_haute'], pred['borne_basse'].iloc[::-1]]),
+            fill='toself',
+            fillcolor='rgba(52, 152, 219, 0.2)',
+            line=dict(color='rgba(255,255,255,0)'),
+            name='Intervalle confiance 95%',
+            hoverinfo='skip'
+        ))
+        
+        # Prédiction centrale
+        fig_pred.add_trace(go.Scatter(
+            x=pred['date'], y=pred['prediction'],
+            mode='lines+markers',
+            line=dict(color='#3498db', width=2.5, dash='dash'),
+            marker=dict(size=8),
+            name='Prédiction Prophet',
+            hovertemplate='%{x|%d/%m/%Y}<br>Prédit: %{y:,.0f}<extra></extra>'
+        ))
+
+        # Ligne verticale manuelle séparant réel et prédit 
+        # (contournement bug Plotly/Timestamp)
+        date_limite = tests_nat['jour'].max()
+        fig_pred.add_trace(go.Scatter(
+            x=[date_limite, date_limite],
+            y=[0, tests_nat['cas_mm7'].max()],
+            mode='lines',
+            line=dict(color='gray', width=1.5, dash='dot'),
+            name='Fin données réelles',
+            hoverinfo='skip',
+            showlegend=True
+        ))
+        
+        fig_pred.update_layout(
+            title="Prédiction des cas positifs — 7 prochains jours",
+            xaxis_title="Date", yaxis_title="Cas / jour (MM7)",
+            height=420, template='plotly_white',
+            hovermode='x unified',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02)
+        )
+        st.plotly_chart(fig_pred, width='stretch')
+        
+        # Avertissement méthodologique
+        st.warning("""
+        **Limite du modèle** : Prophet prédit une continuation des tendances passées.  
+        Il ne peut pas anticiper un nouveau variant ou un changement brutal de comportement.  
+        Ces prédictions sont à caractère **démonstratif** — les données s'arrêtent en juin 2023.
+        """)
+        
+    else:
+        st.error("Fichier predictions_7j.csv introuvable.")
+        st.code("python src/predictions.py", language="bash")
+        st.markdown("Lance la commande ci-dessus dans ton terminal pour générer les prédictions.")
 
 # Footer
 st.markdown("---")
